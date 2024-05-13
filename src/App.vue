@@ -1,20 +1,39 @@
 <template>
   <div id="app">
-    <h1>To-Do List</h1>
-    <to-do-form @todo-added="addToDo" @filter="filterToDo"></to-do-form>
-    <h2 id="list-summary" ref="listSummary" tabindex="-1">{{ listSummary }}</h2>
-    <ul aria-labelledby="list-summary" class="stack-large">
-      <li v-for="item in filteredToDoItems" :key="item.id">
-        <to-do-item
-          :label="item.label"
-          :done="item.done"
-          :id="item.id"
-          @checkbox-changed="updateDoneStatus(item.id)"
-          @item-deleted="deleteToDo(item.id)"
-          @item-edited="editToDo(item.id, $event)"
-        ></to-do-item>
-      </li>
-    </ul>
+    <div class="header">
+      <ul>
+        <li @click="selectedMenu = 'Todos'" :class="{ active: selectedMenu === 'Todos' }">Todos</li>
+        <li @click="selectedMenu = 'Post'" :class="{ active: selectedMenu === 'Post' }">Post</li>
+      </ul>
+    </div>
+    <div class="container">
+      <h1 v-if="selectedMenu === 'Todos'">To-Do List</h1>
+      <to-do-form v-if="selectedMenu === 'Todos'" @todo-added="addToDo" @filter="filterToDo"></to-do-form>
+      <h2 id="list-summary" ref="listSummary" tabindex="-1" v-if="selectedMenu === 'Todos'">{{ listSummary }}</h2>
+      <ul aria-labelledby="list-summary" class="stack-large" v-if="selectedMenu === 'Todos'">
+        <li v-for="item in filteredToDoItems" :key="item.id">
+          <to-do-item
+            :label="item.label"
+            :done="item.done"
+            :id="item.id"
+            @checkbox-changed="updateDoneStatus(item.id)"
+            @item-deleted="deleteToDo(item.id)"
+            @item-edited="editToDo(item.id, $event)"
+          ></to-do-item>
+        </li>
+      </ul>
+      <div v-if="selectedMenu === 'Post'">
+        <label for="userSelect">Select User:</label>
+        <select id="userSelect" v-model="selectedUser">
+          <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
+        </select>
+        <ul v-if="selectedUser">
+          <li v-for="post in userPosts" :key="post.id">
+            {{ post.title }}
+          </li>
+        </ul>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -31,9 +50,12 @@ export default {
   },
   data() {
     return {
-      ToDoItems: [
-      ],
+      selectedMenu: 'Todos', // Default menu selection
+      ToDoItems: [],
       filterType: null,
+      users: [], // Placeholder for users data
+      selectedUser: null, // Selected user ID for posts
+      userPosts: [] // Placeholder for user posts data
     };
   },
   methods: {
@@ -60,6 +82,25 @@ export default {
     filterToDo(type) {
       this.filterType = type;
     },
+    fetchUsers() {
+      fetch('https://jsonplaceholder.typicode.com/users')
+        .then(response => response.json())
+        .then(data => this.users = data)
+        .catch(error => console.error('Error fetching users:', error));
+    },
+    fetchUserPosts(userId) {
+      fetch(`https://jsonplaceholder.typicode.com/posts?userId=${userId}`)
+        .then(response => response.json())
+        .then(data => this.userPosts = data)
+        .catch(error => console.error(`Error fetching posts for user ${userId}:`, error));
+    }
+  },
+  watch: {
+    selectedUser(newVal) {
+      if (newVal) {
+        this.fetchUserPosts(newVal);
+      }
+    }
   },
   computed: {
     listSummary() {
@@ -79,6 +120,9 @@ export default {
       return this.ToDoItems;
     },
   },
+  created() {
+    this.fetchUsers();
+  }
 };
 </script>
 
@@ -191,5 +235,28 @@ export default {
   text-align: center;
   margin: 0;
   margin-bottom: 1rem;
+}
+.header {
+  background-color: #f2f2f2;
+  padding: 10px;
+}
+
+.header ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.header ul li {
+  display: inline-block;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.header ul li.active {
+  font-weight: bold;
+}
+
+.container {
+  margin-top: 20px;
 }
 </style>
