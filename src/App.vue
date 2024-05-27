@@ -1,3 +1,4 @@
+<!-- App.vue -->
 <template>
   <div id="app">
     <div class="header">
@@ -7,54 +8,28 @@
       </ul>
     </div>
     <div class="container">
-      <h1 v-if="selectedMenu === 'Todos'">To-Do List</h1>
-      <to-do-form v-if="selectedMenu === 'Todos'" @todo-added="addToDo" @filter="filterToDo"></to-do-form>
-      <h2 id="list-summary" ref="listSummary" tabindex="-1" v-if="selectedMenu === 'Todos'">{{ listSummary }}</h2>
-      <ul aria-labelledby="list-summary" class="stack-large" v-if="selectedMenu === 'Todos'">
-        <li v-for="item in filteredToDoItems" :key="item.id">
-          <to-do-item
-            :label="item.label"
-            :done="item.done"
-            :id="item.id"
-            @checkbox-changed="updateDoneStatus(item.id)"
-            @item-deleted="deleteToDo(item.id)"
-            @item-edited="editToDo(item.id, $event)"
-          ></to-do-item>
-        </li>
-      </ul>
-      <div v-if="selectedMenu === 'Post'">
-        <label for="userSelect">Select User:</label>
-        <select id="userSelect" v-model="selectedUser">
-          <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
-        </select>
-        <ul v-if="selectedUser">
-          <li v-for="post in userPosts" :key="post.id">
-            {{ post.title }}
-          </li>
-        </ul>
-      </div>
+      <todo-list v-if="selectedMenu === 'Todos'" :todo-items="ToDoItems" @todo-added="addToDo" @update-done-status="updateDoneStatus" @delete-todo="deleteToDo" @edit-todo="editToDo" @filter="filterToDo"></todo-list>
+      <post-list v-if="selectedMenu === 'Post'" :users="users" :user-posts="userPosts"></post-list>
     </div>
   </div>
 </template>
 
 <script>
-import ToDoItem from "./components/ToDoItem.vue";
-import ToDoForm from "./components/ToDoForm.vue";
+import ToDoList from "./components/TodoList.vue";
+import PostList from "./components/PostList.vue";
 import uniqueId from "lodash.uniqueid";
 
 export default {
-  name: "app",
+  name: "App",
   components: {
-    ToDoItem,
-    ToDoForm,
+    ToDoList,
+    PostList,
   },
   data() {
     return {
       selectedMenu: 'Todos', // Default menu selection
       ToDoItems: [],
-      filterType: null,
       users: [], // Placeholder for users data
-      selectedUser: null, // Selected user ID for posts
       userPosts: [] // Placeholder for user posts data
     };
   },
@@ -73,190 +48,13 @@ export default {
     deleteToDo(toDoId) {
       const itemIndex = this.ToDoItems.findIndex((item) => item.id === toDoId);
       this.ToDoItems.splice(itemIndex, 1);
-      this.$refs.listSummary.focus();
     },
     editToDo(toDoId, newLabel) {
       const toDoToEdit = this.ToDoItems.find((item) => item.id === toDoId);
       toDoToEdit.label = newLabel;
     },
     filterToDo(type) {
-      this.filterType = type;
+      // Handle filtering
     },
     fetchUsers() {
-      fetch('https://jsonplaceholder.typicode.com/users')
-        .then(response => response.json())
-        .then(data => this.users = data)
-        .catch(error => console.error('Error fetching users:', error));
-    },
-    fetchUserPosts(userId) {
-      fetch(`https://jsonplaceholder.typicode.com/posts?userId=${userId}`)
-        .then(response => response.json())
-        .then(data => this.userPosts = data)
-        .catch(error => console.error(`Error fetching posts for user ${userId}:`, error));
-    }
-  },
-  watch: {
-    selectedUser(newVal) {
-      if (newVal) {
-        this.fetchUserPosts(newVal);
-      }
-    }
-  },
-  computed: {
-    listSummary() {
-      const numberFinishedItems = this.ToDoItems.filter(
-        (item) => item.done
-      ).length;
-      return `${numberFinishedItems} out of ${this.ToDoItems.length} items completed`;
-    },
-    filteredToDoItems() {
-      if (!this.filterType) {
-        return this.ToDoItems;
-      } else if (this.filterType === "checked") {
-        return this.ToDoItems.filter((item) => item.done);
-      } else if (this.filterType === "unchecked") {
-        return this.ToDoItems.filter((item) => !item.done);
-      }
-      return this.ToDoItems;
-    },
-  },
-  created() {
-    this.fetchUsers();
-  }
-};
-</script>
-
-<style>
-/* Global styles */
-.btn {
-  padding: 0.8rem 1rem 0.7rem;
-  border: 0.2rem solid #4d4d4d;
-  cursor: pointer;
-  text-transform: capitalize;
-}
-.btn__danger {
-  color: #fff;
-  background-color: #ca3c3c;
-  border-color: #bd2130;
-}
-.btn__filter {
-  border-color: lightgrey;
-}
-.btn__danger:focus {
-  outline-color: #c82333;
-}
-.btn__primary {
-  color: #fff;
-  background-color: #000;
-}
-.btn-group {
-  display: flex;
-  justify-content: space-between;
-}
-.btn-group > * {
-  flex: 1 1 auto;
-}
-.btn-group > * + * {
-  margin-left: 0.8rem;
-}
-.label-wrapper {
-  margin: 0;
-  flex: 0 0 100%;
-  text-align: center;
-}
-[class*="__lg"] {
-  display: inline-block;
-  width: 100%;
-  font-size: 1.9rem;
-}
-[class*="__lg"]:not(:last-child) {
-  margin-bottom: 1rem;
-}
-
-@media screen and (min-width: 620px) {
-  [class*="__lg"] {
-    font-size: 2.4rem;
-  }
-}
-.visually-hidden {
-  position: absolute;
-  height: 1px;
-  width: 1px;
-  overflow: hidden;
-  clip: rect(1px 1px 1px 1px);
-  clip: rect(1px, 1px, 1px, 1px);
-  clip-path: rect(1px, 1px, 1px, 1px);
-  white-space: nowrap;
-}
-[class*="stack"] > * {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-.stack-small > * + * {
-  margin-top: 1.25rem;
-}
-.stack-large > * + * {
-  margin-top: 2.5rem;
-}
-@media screen and (min-width: 550px) {
-  .stack-small > * + * {
-    margin-top: 1.4rem;
-  }
-  .stack-large > * + * {
-    margin-top: 2.8rem;
-  }
-}
-/* End global styles */
-#app {
-  background: #fff;
-  margin: 2rem 0 4rem 0;
-  padding: 1rem;
-  padding-top: 0;
-  position: relative;
-  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 2.5rem 5rem 0 rgba(0, 0, 0, 0.1);
-}
-@media screen and (min-width: 550px) {
-  #app {
-    padding: 4rem;
-  }
-}
-#app > * {
-  max-width: 50rem;
-  margin-left: auto;
-  margin-right: auto;
-}
-#app > form {
-  max-width: 100%;
-}
-#app h1 {
-  display: block;
-  min-width: 100%;
-  width: 100%;
-  text-align: center;
-  margin: 0;
-  margin-bottom: 1rem;
-}
-.header {
-  background-color: #f2f2f2;
-  padding: 10px;
-}
-
-.header ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-.header ul li {
-  display: inline-block;
-  margin-right: 10px;
-  cursor: pointer;
-}
-
-.header ul li.active {
-  font-weight: bold;
-}
-
-.container {
-  margin-top: 20px;
-}
-</style>
+      fetch('https://jsonplaceholder.typicode.com
