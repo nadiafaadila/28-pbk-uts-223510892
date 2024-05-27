@@ -1,4 +1,4 @@
-
+<!-- TodoList.vue -->
 <template>
   <div>
     <h1>To-Do List</h1>
@@ -6,28 +6,19 @@
     <h2 id="list-summary" ref="listSummary" tabindex="-1">{{ listSummary }}</h2>
     <ul aria-labelledby="list-summary" class="stack-large">
       <li v-for="item in filteredToDoItems" :key="item.id">
-        <to-do-item
-          :label="item.label"
-          :done="item.done"
-          :id="item.id"
-          @checkbox-changed="updateDoneStatus(item.id)"
-          @item-deleted="deleteToDo(item.id)"
-          @item-edited="editToDo(item.id, $event)"
-        ></to-do-item>
+        <slot name="todo-item" :item="item"></slot>
       </li>
     </ul>
   </div>
 </template>
 
 <script>
-import ToDoItem from "./components/ToDoItem.vue";
-import ToDoForm from "./components/ToDoForm.vue";
+import ToDoForm from "./ToDoForm.vue"; // Assuming ToDoForm component file path
 import uniqueId from "lodash.uniqueid";
 
 export default {
   name: "TodoList",
   components: {
-    ToDoItem,
     ToDoForm,
   },
   props: {
@@ -45,19 +36,7 @@ export default {
     addToDo(toDoLabel) {
       this.$emit("todo-added", toDoLabel);
     },
-    updateDoneStatus(toDoId) {
-      this.$emit("update-done-status", toDoId);
-    },
-    deleteToDo(toDoId) {
-      this.$emit("delete-todo", toDoId);
-    },
-    editToDo(toDoId, newLabel) {
-      this.$emit("edit-todo", toDoId, newLabel);
-    },
-    filterToDo(type) {
-      this.filterType = type;
-      this.$emit("filter", type);
-    },
+    // Other methods...
   },
   computed: {
     listSummary() {
