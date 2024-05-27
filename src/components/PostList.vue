@@ -6,9 +6,7 @@
       <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
     </select>
     <ul v-if="selectedUser">
-      <li v-for="post in userPosts" :key="post.id">
-        {{ post.title }}
-      </li>
+      <slot name="post-item" v-for="post in userPosts" :key="post.id" :post="post"></slot>
     </ul>
   </div>
 </template>
